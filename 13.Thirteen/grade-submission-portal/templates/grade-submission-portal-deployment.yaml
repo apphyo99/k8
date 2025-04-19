@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.microservice.name }}
+  namespace: {{ .Values.microservice.namespace }}
+spec:
+  replicas: {{ .Values.microservice.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: grade-submission-portal
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grade-submission
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/instance: grade-submission-portal
+    spec:
+      containers:
+        - name: {{ .Values.microservice.name }}
+          image: {{ .Values.workload.image }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.workload.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.workload.port  }}
+            periodSeconds: 5
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.microservice.name}}-config
+
+          resources:
+            requests:
+              memory: {{ .Values.workload.resources.requests.memory }}
+              cpu: {{ .Values.workload.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.workload.resources.requests.memory }}
+
+          ports:
+            - containerPort: {{ .Values.workload.port }}
+              name: http
